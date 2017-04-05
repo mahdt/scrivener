@@ -1,0 +1,20 @@
+{
+	"view engines": {
+		"html": {
+			"name": "ejs",
+			"module": "ejs",
+			"renderer": "renderFile"
+		}
+	},
+	"express": {
+		"view engine": "html",
+		"views": "path:./views"
+	},
+	"middleware": {
+		"router": {
+			"module": {
+				"arguments": [{"directory": "path:./controllers"}]
+			}
+		}
+	}
+}

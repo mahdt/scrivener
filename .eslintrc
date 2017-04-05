@@ -1,0 +1,40 @@
+{
+  // // babel-eslint parsing
+  "parser": "babel-eslint",
+  // Extend the airbnb javascript style guide
+  "extends": "airbnb",
+  "plugins": ["import", "class-property"],
+  "settings": {
+    "import/resolver": {
+      "webpack": {
+        "config": "./webpack/webpack.eslint.js"
+      }
+    }
+  },
+  "env": {
+    // I write for browser
+    "browser": true,
+    // in CommonJS
+    "node": true,
+    "mocha": true
+  },
+  "rules": {
+    "comma-dangle": 0,
+    "import/no-extraneous-dependencies": ["error", {"devDependencies": true, "optionalDependencies": false, "peerDependencies": false}],
+    // "object-shorthand": ["error", "consistent"],
+    "max-len": [1, { "code": 120 }],
+    "no-underscore-dangle": 0,
+    "react/jsx-filename-extension": 0,
+    "arrow-body-style": 0,
+    "no-plusplus": 0,
+    "no-alert": 0,
+    "quotes": ["error", "single", { "allowTemplateLiterals": true }],
+    "react/forbid-prop-types": [2, { "forbid": [ 'any', 'array'] }]
+  },
+  "parserOptions":{
+    "ecmaFeatures": {
+      "classes": true,
+      "experimentalObjectRestSpread": true
+    }
+  }
+}

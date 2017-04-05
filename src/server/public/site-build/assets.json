@@ -1,0 +1,5 @@
+{
+  "bundle": {
+    "js": "/site-build/bundle.js"
+  }
+}
