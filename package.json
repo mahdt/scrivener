@@ -32,6 +32,7 @@
     "redux-devtools-extension": "^2.13.0",
     "redux-form": "^6.4.3",
     "redux-saga": "^0.14.5",
+    "tesseract.js": "^1.0.10",
     "winston": "^2.1.1"
   },
   "devDependencies": {
