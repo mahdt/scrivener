@@ -12,8 +12,10 @@ import s from 'client/assets/images/fifa-match-sat.jpg';
 class Habib extends React.Component {
 	constructor(props) {
 		super(props);
-		this.runOCR      = this.runOCR.bind(this);
-		this.filterImage = this.filterImage.bind(this);
+		this.runOCR        = this.runOCR.bind(this);
+		this.filterImage   = this.filterImage.bind(this);
+		this.processData   = this.processData.bind(this);
+		this.getDataObject = this.getDataObject.bind(this);
 		this.state = {preImage: t, postImage: t, preResult: "", postResult: ""};
 		this.runOCR(t, "pre");
 		this.filterImage(t);
@@ -38,10 +40,7 @@ class Habib extends React.Component {
 	runOCR(myImage, type) {
 		var dataName = type+"Result";
 		var $this = this;
-    Tesseract.recognize(myImage,{
-    	lang: 'eng',
-    	essedit_char_blacklist: 'H'
-    })
+    Tesseract.recognize(myImage)
 		.then(function(result) {
 			console.log(result)
 			console.log(result.text)
@@ -60,13 +59,46 @@ class Habib extends React.Component {
 			if(confidence > 65)
 				data.push({'text':text});
 		})
+		this.getDataObject(data)
+		// var options = {
+		//   keys: ['text'],
+		//   id: 'text'
+		// };
+		// var fuse = new Fuse(data, options);
+		// var search = ["Goals", "Shots", "Shots on Target", "Possession", "Tackles", "Fouls", "Yellow Cards", "Red Cards", "Injuries", "Offsides", "Corners", "Shot Acuaracy", "Pass Acuaracy"];
+		// var numberPattern = /\d+/g;
+		// search.forEach((str) => {
+		// 	let r = fuse.search(str);
+		// 	let t = r[0].match(numberPattern);
+		// 	d.Home[str] = t[0];
+		// 	d.Away[str] = t[1];
+		// });
+		// // var r = fuse.search("shoot on Target");
+		// // var numberPattern = /\d+/g;
+		// // r[0].match(numberPattern);
+		// window.fuse = fuse;
+		// window.result = d;		
+	}
+
+	getDataObject(rawData) {
+		var result = {"Home": {}, "Away":{}};
+		var search = ["Goals", "Shots", "Shots on Target", "Possession", "Tackles", "Fouls", "Yellow Cards", "Red Cards", "Injuries", "Offsides", "Corners", "Shot Acuaracy", "Pass Acuaracy"];
+		var numberPattern = /\d+/g;
 		var options = {
 		  keys: ['text'],
 		  id: 'text'
 		};
-		var fuse = new Fuse(data, options);
-//		fuse.search("shoot on Target")
-		window.fuse = fuse;		
+		var fuse = new Fuse(rawData, options);
+		search.forEach((str) => {
+			let r = fuse.search(str);
+			let t = r[0].match(numberPattern);
+			result.Home[str] = t[0];
+			result.Away[str] = t[1];
+		});
+		window.fuse = fuse;
+		window.result = result;
+
+		return result;
 	}
 
 	render() {
