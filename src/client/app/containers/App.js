@@ -4,10 +4,9 @@ import 'client/assets/styles/main.less';
 import Fuse from 'fuse-js-latest'
 // import Jimp from 'jimp'
 // import Tesseract from 'tesseract.js'
-import t from 'client/assets/images/fifa18.jpg';//'client/assets/images/fifa-match-facts.jpg';
-import c from 'client/assets/images/fifa-match-facts-contrast.jpg';
-import bw from 'client/assets/images/fifa-match-facts-bw.jpg';
-import s from 'client/assets/images/fifa-match-sat.jpg';
+import t from 'client/assets/images/fifa18.jpg';
+
+const durl = 'https://lh3.googleusercontent.com/-XNwgkqWC5B8/Wc1xUZhtyoI/AAAAAAAAHtc/DKQc5hL79Jko1m268KozzbF74ucKN5g_gCHMYBhgL/I/IMG_4274.JPG';
 
 class Habib extends React.Component {
 	constructor(props) {
@@ -16,10 +15,66 @@ class Habib extends React.Component {
 		this.filterImage   = this.filterImage.bind(this);
 		this.processData   = this.processData.bind(this);
 		this.getDataObject = this.getDataObject.bind(this);
-		this.state = {preImage: t, postImage: t, preResult: "", postResult: ""};
-		this.runOCR(t, "pre");
-		this.filterImage(t);
+		this.getAllImages  = this.getAllImages.bind(this);
+		this.getImageData  = this.getImageData.bind(this);
+	
+		this.getAllImages();
+		// var url = new URL("http://localhost:8003/getImageData");
+		// var params = {'url' : durl};
+		// Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+		// fetch(url).then(response => {
+		// 	return response.blob();
+		// }).then( myBlob => {
+		// 	let img = URL.createObjectURL(myBlob);
+		// 	this.setState({
+		// 		['postImage']: img
+		// 	});
+		// 	this.runOCR(img, "pre");
+		// 	this.filterImage(img);			
+		// });
+		this.state = {temp:[], preImage: "", postImage: "", preResult: "", postResult: ""};
+		// this.runOCR(t, "pre");
+		// this.filterImage(t);
 
+	}
+
+	getAllImages(){
+		var url = new URL("http://localhost:8003/getImages");
+		var params = {};//{'url' : durl};
+		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+		fetch(url).then(response => {
+			if(!response.ok) {
+				throw response;
+			}
+			return response.text();
+		}).then( text => {
+			var imagesArray = JSON.parse(text);
+			imagesArray.forEach(({content}) => {
+				this.getImageData(content.src);
+			});
+		}).catch(function(error){
+			error.text().then( errorMessage => {
+				console.log(errorMessage);
+			});
+		});		
+	}
+
+	getImageData(src) {
+		var url = new URL("http://localhost:8003/getImageData");
+		var params = {'url' : src};
+		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+		fetch(url).then(response => {
+			return response.blob();
+		}).then( myBlob => {
+			let img = URL.createObjectURL(myBlob);
+			Jimp.read(img).then((image) => {
+				image.getBase64(Jimp.MIME_JPEG, (err, src) => {
+					var n = this.state.temp;
+					n.push(src);
+					this.setState({'temp': n});
+				});				
+			});		
+		});
 	}
 
 	filterImage(myImage) {
@@ -59,25 +114,7 @@ class Habib extends React.Component {
 			if(confidence > 65)
 				data.push({'text':text});
 		})
-		this.getDataObject(data)
-		// var options = {
-		//   keys: ['text'],
-		//   id: 'text'
-		// };
-		// var fuse = new Fuse(data, options);
-		// var search = ["Goals", "Shots", "Shots on Target", "Possession", "Tackles", "Fouls", "Yellow Cards", "Red Cards", "Injuries", "Offsides", "Corners", "Shot Acuaracy", "Pass Acuaracy"];
-		// var numberPattern = /\d+/g;
-		// search.forEach((str) => {
-		// 	let r = fuse.search(str);
-		// 	let t = r[0].match(numberPattern);
-		// 	d.Home[str] = t[0];
-		// 	d.Away[str] = t[1];
-		// });
-		// // var r = fuse.search("shoot on Target");
-		// // var numberPattern = /\d+/g;
-		// // r[0].match(numberPattern);
-		// window.fuse = fuse;
-		// window.result = d;		
+		this.getDataObject(data)	
 	}
 
 	getDataObject(rawData) {
@@ -102,8 +139,12 @@ class Habib extends React.Component {
 	}
 
 	render() {
+		var r = this.state.temp.map((imgSrc, index) => {
+			return (<img key={"H"+index} src={imgSrc}></img>)
+		});
 		return (
 			<div>
+				<div>{r}</div>
 				<div>
 				  PRE
 					<img src={this.state.preImage}></img>

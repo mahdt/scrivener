@@ -17,6 +17,12 @@ module.exports = options => ({
     ],
     extensions: ['.js']
   },
+  // node: {
+  //   console: false,
+  //   fs: 'empty',
+  //   net: 'empty',
+  //   tls: 'empty'
+  // },  
   module: {
     rules: [
       {
