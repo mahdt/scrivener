@@ -26,6 +26,7 @@
     "happypack": "^3.0.3",
     "kraken-js": "^2.1.0",
     "lodash": "^4.14.1",
+    "mongodb": "^2.2.33",
     "picasa": "^1.0.6",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
