@@ -4,7 +4,7 @@ import Fuse from 'fuse-js-latest'
 
 const durl = 'https://lh3.googleusercontent.com/-XNwgkqWC5B8/Wc1xUZhtyoI/AAAAAAAAHtc/DKQc5hL79Jko1m268KozzbF74ucKN5g_gCHMYBhgL/I/IMG_4274.JPG';
 
-class NewMatches extends React.Component {
+class EditMatches extends React.Component {
 	constructor(props) {
 		super(props);
 		this.getAllImages  = this.getAllImages.bind(this);
@@ -90,4 +90,4 @@ var test = {"id":"6478332632290589314","album_id":"6470952834617128081","access"
 	}
 }
 
-export default NewMatches
+export default EditMatches

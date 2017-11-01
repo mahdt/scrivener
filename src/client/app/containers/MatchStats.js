@@ -178,7 +178,7 @@ class MatchStats extends React.Component {
 				<div className={"input-group row row-m-t"}>
 				    <input type="text" className={"form-control text-center"} type="number" onChange={(e) => {this.handleChange(e, "Home", id)}} id={"home"+id} ref={(input) => { this["home"+id] = input; }} placeholder="Home"/>
 				    <span className={"input-group-addon"}>{display}</span>
-				    <input type="text" className={"form-control text-center"} type="number" onChange={(e) => {this.handleChange(e, "Home", id)}} id={"away"+id} ref={(input) => { this["away"+id] = input; }} placeholder="Away"/>
+				    <input type="text" className={"form-control text-center"} type="number" onChange={(e) => {this.handleChange(e, "Away", id)}} id={"away"+id} ref={(input) => { this["away"+id] = input; }} placeholder="Away"/>
 				</div>				
 				);
 		});

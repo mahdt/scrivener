@@ -24,19 +24,21 @@ const options = {albumId: '6470952834617128081'};
 // picasa.getPhotos(accessToken, options,  (error, albums) => {
 //   console.log(error, albums)
 // })
-function getImages(res){
-	if(refreshTokenS === "") {
-		res.status(500).send({ 'error': "Not connected to google api" });
-	} else {
-		picasa.getPhotos(accessTokenS, options,  (error, albums) => {
-		  if(!!error) {
-		  	res.status(500).send({ 'error': error });
-		  } else {
-		  	res.send(albums);
-		  }
-		})
-	}
-};
+function getAllImages() {
+	return new Promise((resolve, reject) => {
+		if(refreshTokenS === "") {
+			reject({ 'error': "Not connected to google api" });
+		} else {
+			picasa.getPhotos(accessTokenS, options,  (error, albums) => {
+			  if(!!error) {
+			  	reject({ 'error': error });
+			  } else {
+			  	resolve(albums);
+			  }
+			});
+		}
+	})
+}
 
 function getTokens(code, res) {
 	picasa.getAccessToken(config, code, (error, accessToken, refreshToken) => {
@@ -57,5 +59,5 @@ function refreshToken(res){
 module.exports = {
 	'authURL'     : authURL,
 	'getTokens'   : getTokens,
-	'getImages'   : getImages
+	'getAllImages': getAllImages
 };
