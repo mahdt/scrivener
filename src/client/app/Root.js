@@ -4,10 +4,16 @@ import DevTools from 'client/app/DevTools';
 import { Router, browserHistory } from 'react-router';
 import routes from 'client/app/routes';
 
+import App from 'client/app/containers/App';
+import { BrowserRouter } from 'react-router-dom';
+
 const RootDev = ({ store }) => (
   <Provider store={store}>
     <div>
-      <Router history={browserHistory} routes={routes} />
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>    
+      {/*<Router history={browserHistory} routes={routes} />*/}
       <DevTools />
     </div>
   </Provider>

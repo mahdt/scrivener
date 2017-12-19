@@ -3,13 +3,17 @@ import { connect } from 'react-redux';
 import Fuse from 'fuse-js-latest'
 import 'client/assets/styles/main.less';
 
+import MatchFacts from './MatchFacts.js';
+import Loader from '../components/Loader.js';
+
 import t from 'client/assets/images/fifa18.jpg';
 
 class MatchStats extends React.Component {
 	constructor(props) {
 		super(props);
-		this.state = {data:{Home:{}, Away:{}}, img:{},fields:['Goals', 'Shots', 'Shots On Target', 'Possession %','Tackles','Fouls', 'Yellow Cards', 'Red Cards', 'Injuries', 'Offsides', 'Corners', 'Shot Accuracy %', 'Pass Accuracy %']};
+		this.state = {imgLoaded: false, isDone:false, progress:'0', data:{Home:{}, Away:{}}, img:{},fields:['Goals', 'Shots', 'Shots On Target', 'Possession %','Tackles','Fouls', 'Yellow Cards', 'Red Cards', 'Injuries', 'Offsides', 'Corners', 'Shot Accuracy %', 'Pass Accuracy %']};
 		this.handleChange  = this.handleChange.bind(this);
+		this.handleFormChange  = this.handleFormChange.bind(this);
 		this.filterImage   = this.filterImage.bind(this);
 		this.runOCR        = this.runOCR.bind(this);
 		this.processData   = this.processData.bind(this);
@@ -18,8 +22,18 @@ class MatchStats extends React.Component {
 		this.saveData      = this.saveData.bind(this);
 		this.getImageData  = this.getImageData.bind(this);
 
-		this.getImageData(this.props.imgData.content.src);		
+		if(this.props.imgData.hasOwnProperty('content'))
+			this.getImageData(this.props.imgData.content.src);		
 	}
+
+	componentWillReceiveProps(nextProps, nextState) {
+		if(JSON.stringify(this.props.imgData) !== JSON.stringify(nextProps.imgData)) {
+			if(nextProps.imgData.hasOwnProperty('content')){
+				this.setState({isDone: false, progress:'0', imgLoaded:false, data:{Home:{}, Away:{}}});
+				this.getImageData(nextProps.imgData.content.src);
+			}
+		}
+	}	
 
 	getImageData(src) {
 		var url = new URL("http://localhost:8003/getImageData");
@@ -31,7 +45,7 @@ class MatchStats extends React.Component {
 			let img = URL.createObjectURL(myBlob);
 			Jimp.read(img).then((image) => {
 				image.getBase64(Jimp.MIME_JPEG, (err, src) => {
-					this.setState({'img': src});
+					this.setState({'img': src, imgLoaded: true});
 					this.filterImage(src);
 				});				
 			});		
@@ -59,7 +73,9 @@ class MatchStats extends React.Component {
 			console.log(result)
 			console.log(result.text)
 			this.processData(result);
-		}).progress(function(result) {
+		}).progress((result) => {
+			let progress = Math.round(result["progress"] * 100);
+			this.setState({progress: progress});
 		console.log(result["status"] + " (" +(result["progress"] * 100) + "%)")
 		});
 	}
@@ -72,7 +88,9 @@ class MatchStats extends React.Component {
 		})
 		var dataObj = this.getDataObject(data);
 		this.setState({data: dataObj});
-		this.updateFields(dataObj);	
+		this.setState({isDone: true});
+		console.log("Data", dataObj);
+//		this.updateFields(dataObj);	
 	}
 
 	getDataObject(rawData) {
@@ -145,6 +163,8 @@ class MatchStats extends React.Component {
 		console.log(data);
 	}
 
+
+
 	saveData(e) {
 		var url = new URL("http://localhost:8003/saveDbData");
 		var data = this.state.data;
@@ -153,7 +173,6 @@ class MatchStats extends React.Component {
 			console.log("missing params")
 			return
 		}
-
 		var params = {'data': data};
 		Object.keys(params).forEach(key => url.searchParams.append(key, encodeURIComponent(JSON.stringify(params[key]))));//encodeURIComponent(JSON.stringify(params[key]))
 		fetch(url).then(response => {
@@ -171,43 +190,73 @@ class MatchStats extends React.Component {
 
 	}
 
-	render() {
-		let row = this.state.fields.map((display, index) => {
-			let id = display.replace(/[^a-zA-Z]/g, "");
-			return (
-				<div className={"input-group row row-m-t"}>
-				    <input type="text" className={"form-control text-center"} type="number" onChange={(e) => {this.handleChange(e, "Home", id)}} id={"home"+id} ref={(input) => { this["home"+id] = input; }} placeholder="Home"/>
-				    <span className={"input-group-addon"}>{display}</span>
-				    <input type="text" className={"form-control text-center"} type="number" onChange={(e) => {this.handleChange(e, "Away", id)}} id={"away"+id} ref={(input) => { this["away"+id] = input; }} placeholder="Away"/>
-				</div>				
-				);
+	validateData({Home={},Away={}}, fields) {
+		let ids = fields.map((display, index) => {
+			return display.replace(/[^a-zA-Z]/g, "");
 		});
+
+		if(!Home.hasOwnProperty('Player') || !Away.hasOwnProperty('Player'))
+			return false;
+		if(Home['Player'] === Away['Player'])
+			return false;
+
+		let inValid = ids.some((key)=>{
+			if(Home.hasOwnProperty(key) && Away.hasOwnProperty(key)) {
+				if(Home[key] == "" || Home[key] < 0
+					 || Away[key] == "" || Away[key] < 0) {
+					return true;
+				}
+			} else {
+				return true
+			}
+		});
+
+		return !inValid
+	}
+
+	handleFormChange(data) {
+		this.setState(data);
+	}
+
+	render() {
+		let fields = this.state.fields.map((display, index) => {
+			let id = display.replace(/[^a-zA-Z]/g, "");
+			return {id, display}
+		});
+
+		let stats;
+		if(this.state.isDone) {
+			stats = <MatchFacts handleChange={this.handleFormChange} data={this.state.data} fields={fields}/>
+		} else {
+			stats = <Loader type={"progress"} progress={this.state.progress}/>
+		}
+
+		let imgView;
+		if(this.state.imgLoaded) {
+			imgView = <img src={this.state.img} style={{width: '100%'}} className={"rounded float-left"} alt="..."/>
+		} else {
+			imgView = <Loader/>
+		}
+
 		return (
 			<div className={"container"}>
 				<div className={"row"}>
-					<div className={"col-6 align-self-center"}>
-						<img src={this.state.img} style={{width: '100%'}} className={"rounded float-left"} alt="..."/>
-					</div>
-					<div className={"col-6"}>
-						<div className={"input-group row"}>
-					    <select className={"form-control"} onChange={(e) => {this.handleChange(e, "Home", "Player")}}>
-					      <option value="" selected disabled hidden>Home</option>
-					      <option>Habib</option>
-					      <option>Mahd</option>
-					      <option>Talha</option>
-					    </select>	
-					    <span className={"input-group-addon"}>{"Player"}</span>	
-					    <select className={"form-control"} onChange={(e) => {this.handleChange(e, "Away", "Player")}}>
-					      <option value="" selected disabled hidden>Away</option>
-					      <option>Habib</option>
-					      <option>Mahd</option>
-					      <option>Talha</option>
-					    </select>						    			    					
+					<div className={"col col-sm-6 col-md-6 col-lg-4 col-xl-4 align-self-center"}>
+						<div style={{display:this.state.imgLoaded? "block":"none"}}>
+							<img src={this.state.img} style={{width: '100%'}} className={"rounded float-left"} alt="..."/>
 						</div>
-						{row}
+						<div style={{display:this.state.imgLoaded? "none":"block"}}>
+							<Loader/>
+						</div>
+						{/*imgView*/}
 					</div>
-					<button onClick={this.saveData}>Save</button>			
+					<div className={"col align-self-center"}>
+						{stats}
+					</div>			
 				</div>
+				<div className={"d-flex align-items-center justify-content-center"} style={{paddingTop: "25px"}}>
+					<button type="button" className={"btn btn-primary btn-lg btn-block"} onClick={this.saveData} disabled={!this.validateData(this.state.data, this.state.fields)}>Save</button>	
+				</div>				
 			</div>
 			);
 	}
